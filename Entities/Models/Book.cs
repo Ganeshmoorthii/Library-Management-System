@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Library_Management_SYS.Models
+namespace Library_Management_SYS.Entities.Models
 {
     public class Book
     {

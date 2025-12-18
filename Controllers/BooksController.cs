@@ -1,78 +1,59 @@
-﻿using Library_Management_SYS.Data;
+﻿using Library_Management_SYS.Application.Interfaces;
+//using Library_Management_SYS.Data;
+using Library_Management_SYS.Entities.Models;
 using Microsoft.AspNetCore.Mvc;
-using Library_Management_SYS.Models;
 
 namespace Library_Management_SYS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class BooksController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IRepositoryWrapper _repository;
 
-        public BooksController(ApplicationDbContext context)
+        public BooksController(IRepositoryWrapper repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
-        [HttpGet] 
-        public IActionResult getBooks()
+        [HttpGet]
+        public async Task<IActionResult> GetAllBooks()
         {
-            var books = _context.Books.ToList();
+            var books = await _repository.BookService.GetAllBooksAsync();
             return Ok(books);
         }
 
-        
-        [HttpPost("{id}")]
-        public async Task<ActionResult<Book>> CreateBook(int id, [FromBody] Book book)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetBookById(int id)
         {
-            var admin = await _context.Admin.FindAsync(id);
-            if (admin == null)
-                return Forbid(); 
+            var book = await _repository.BookService.GetBookByIdAsync(id);
+            if (book == null)
+                return NotFound();
 
-            
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(getBooks), null, book);
+            return Ok(book);
         }
 
-        [HttpPut("{id}")]
-        public async Task<ActionResult<Book>> UpdateBook(int id, [FromBody] Book book)
+        [HttpPost("{adminId}")]
+        public async Task<IActionResult> CreateBook(int adminId, [FromBody] Book book)
         {
-            var admin = await _context.Admin.FindAsync(id);
-            if (admin == null)
-                return Forbid();
+            _repository.BookService.CreateBookAsync(adminId, book);
+            await _repository.SaveAsync();
+            return Ok("Book Created Successfully");
+        }
 
-            Book getBook = await _context.Books.FindAsync(book.BookId);
-            if (getBook == null)
-            {
-                return NotFound();
-            }
-            //getBook.BookId = book.BookId;
-            getBook.BookName = book.BookName;
-            getBook.BookAuthor = book.BookAuthor;
-            getBook.publication_date = book.publication_date;
-            _context.Books.Update(getBook);
-            await _context.SaveChangesAsync();
-
+        [HttpPut("{adminId}")]
+        public async Task<IActionResult> UpdateBook(int adminId, [FromBody] Book book)
+        {
+            _repository.BookService.UpdateBookAsync(adminId, book);
+            await _repository.SaveAsync();
             return Ok("Book Updated Successfully");
         }
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<Book>> DeleteBook(int id, [FromBody] int bookId)
+
+        [HttpDelete("{adminId}/{bookId}")]
+        public async Task<IActionResult> DeleteBook(int adminId, int bookId)
         {
-            var admin = await _context.Admin.FindAsync(id);
-            if (admin == null)
-                return Forbid();
-
-            Book getBook = await _context.Books.FindAsync(bookId);
-            if(getBook == null)
-            {
-                return NotFound();
-            }
-            _context.Books.Remove(getBook);
-            await _context.SaveChangesAsync();
-
+            _repository.BookService.DeleteBookAsync(adminId, bookId);
+            await _repository.SaveAsync();
             return Ok("Book Deleted Successfully");
         }
     }

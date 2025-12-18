@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Library_Management_SYS.Data;
+﻿using Library_Management_SYS.Application.Interfaces;
+using Library_Management_SYS.Repository;
+using Library_Management_SYS.Entities;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,12 +10,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ FIXED: Use ApplicationDbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// DbContext
+builder.Services.AddDbContext<LibraryDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
+
+// 🔥 THIS LINE WAS MISSING
+builder.Services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
 
 var app = builder.Build();
 

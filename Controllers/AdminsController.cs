@@ -1,5 +1,6 @@
-﻿using Library_Management_SYS.Data;
-using Library_Management_SYS.Models;
+﻿using Library_Management_SYS.Application.Interfaces;
+using Library_Management_SYS.Entities;
+using Library_Management_SYS.Entities.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,52 +8,44 @@ using Microsoft.EntityFrameworkCore;
 [Route("api/[controller]")]
 public class AdminsController : ControllerBase
 {
-    private readonly ApplicationDbContext _context;
-
-    public AdminsController(ApplicationDbContext context)
+    private readonly IRepositoryWrapper _repository;
+    public AdminsController(IRepositoryWrapper repository)
     {
-        _context = context;
+        _repository = repository;
     }
-
     [HttpGet]
     public async Task<IActionResult> getAdmins()
     {
-        var admins = await _context.Admin.ToListAsync();
+        var admins = await _repository.AdminService.GetAllAdminsAsync();
         return Ok(admins);
     }
-
-    [HttpPost]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> getAdminById(int id)
+    {
+        var admin = await _repository.AdminService.GetAdminByIdAsync(id);
+        if (admin == null)
+            return NotFound();
+        return Ok(admin);
+    }
+    [HttpPut]
     public async Task<IActionResult> createAdmin([FromBody] Admin admin)
     {
-        await _context.Admin.AddAsync(admin);
-        await _context.SaveChangesAsync();
+        _repository.AdminService.CreateAdminAsync(admin);
+        await _repository.SaveAsync();
         return Ok("Admin Created Successfully");
     }
-
-    [HttpPut]
+    [HttpPost]
     public async Task<IActionResult> updateAdmin([FromBody] Admin admin)
     {
-        var updateAdmin = await _context.Admin.FindAsync(admin.AdminId);
-        if (updateAdmin == null)
-            return NotFound();
-
-        updateAdmin.name = admin.name;
-        updateAdmin.Email = admin.Email;
-        updateAdmin.Password = admin.Password;
-
-        await _context.SaveChangesAsync();
+        _repository.AdminService.UpdateAdminAsync(admin);
+        await _repository.SaveAsync();
         return Ok("Admin Updated Successfully");
     }
-
     [HttpDelete("{id}")]
     public async Task<IActionResult> deleteAdmin(int id)
     {
-        var admin = await _context.Admin.FindAsync(id);
-        if (admin == null)
-            return NotFound();
-
-        _context.Admin.Remove(admin);
-        await _context.SaveChangesAsync();
+        _repository.AdminService.DeleteAdminAsync(id);
+        await _repository.SaveAsync();
         return Ok("Admin Deleted Successfully");
     }
 }
